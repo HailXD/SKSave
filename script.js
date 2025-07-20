@@ -63,6 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         originalFilename = file.name;
+        if (originalFilename.endsWith('.data.txt')) {
+            originalFilename = originalFilename.slice(0, -4);
+        }
         const reader = new FileReader();
 
         reader.onload = (e) => {
@@ -127,23 +130,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const [handlerType, key] = getFileHandler(cleanFilename);
 
-        let encryptedContent;
+        let blob;
         if (handlerType === 'des') {
-            encryptedContent = encryptDes(contentStr, key, IV);
+            const encryptedBase64 = encryptDes(contentStr, key, IV);
+            const raw = atob(encryptedBase64);
+            const rawLength = raw.length;
+            const array = new Uint8Array(new ArrayBuffer(rawLength));
+            for(let i = 0; i < rawLength; i++) {
+              array[i] = raw.charCodeAt(i);
+            }
+            blob = new Blob([array], {type: 'application/octet-stream'});
         } else { // xor
             const encoder = new TextEncoder();
             const data = encoder.encode(contentStr);
             const xorResult = xorCipher(data, key);
-            encryptedContent = new Blob([xorResult], {type: 'application/octet-stream'});
+            blob = new Blob([xorResult], {type: 'application/octet-stream'});
         }
-        
-        if (encryptedContent) {
-            const blob = (handlerType === 'des') ? new Blob([encryptedContent], { type: 'text/plain' }) : encryptedContent;
-            downloadLink.href = URL.createObjectURL(blob);
-            downloadLink.download = originalFilename;
-            downloadLink.textContent = `Click to download ${originalFilename}`;
+
+        if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            downloadLink.href = '#';
+            downloadLink.textContent = `Downloaded ${originalFilename}`;
             downloadLink.style.display = 'block';
-            outputDiv.textContent = `Successfully encoded. Ready for download.`;
+            outputDiv.textContent = `Successfully encoded and download started.`;
         } else {
             outputDiv.textContent = 'Encoding failed.';
         }
