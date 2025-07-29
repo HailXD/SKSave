@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         originalFilename = file.name;
-        if (originalFilename.endsWith('.data')) {
+        if (originalFilename.endsWith('.data.txt')) {
             originalFilename = originalFilename.slice(0, -4);
         }
         const reader = new FileReader();
