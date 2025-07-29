@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         originalFilename = file.name;
-        if (originalFilename.endsWith('.data.txt')) {
+        if (originalFilename.endsWith('.data')) {
             originalFilename = originalFilename.slice(0, -4);
         }
         const reader = new FileReader();
@@ -81,9 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (handlerType === 'des') {
                 decryptedContent = decryptDes(content, key, IV);
             } else { // xor
-                const arrayBuffer = new Uint8Array(content.split("").map(c => c.charCodeAt(0)));
-                const xorResult = xorCipher(arrayBuffer, key);
-                decryptedContent = new TextDecoder("utf-8").decode(xorResult);
+                try {
+                    const binaryString = atob(content);
+                    const arrayBuffer = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        arrayBuffer[i] = binaryString.charCodeAt(i);
+                    }
+                    const xorResult = xorCipher(arrayBuffer, key);
+                    decryptedContent = new TextDecoder("utf-8").decode(xorResult);
+                } catch (e) {
+                    console.error("Error decoding base64 or decrypting XOR:", e);
+                    decryptedContent = null;
+                }
             }
 
             if (decryptedContent) {
@@ -100,12 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
-        const [handlerType, _] = getFileHandler(originalFilename.split("_")[0] + ".data");
-        if(handlerType === 'des') {
-            reader.readAsText(file);
-        } else {
-            reader.readAsBinaryString(file);
-        }
+        reader.readAsText(file);
     });
 
     encodeButton.addEventListener('click', () => {
@@ -133,18 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let blob;
         if (handlerType === 'des') {
             const encryptedBase64 = encryptDes(contentStr, key, IV);
-            const raw = atob(encryptedBase64);
-            const rawLength = raw.length;
-            const array = new Uint8Array(new ArrayBuffer(rawLength));
-            for(let i = 0; i < rawLength; i++) {
-              array[i] = raw.charCodeAt(i);
-            }
-            blob = new Blob([array], {type: 'application/octet-stream'});
+            blob = new Blob([encryptedBase64], {type: 'text/plain'});
         } else { // xor
             const encoder = new TextEncoder();
             const data = encoder.encode(contentStr);
             const xorResult = xorCipher(data, key);
-            blob = new Blob([xorResult], {type: 'application/octet-stream'});
+            let binaryString = '';
+            for (let i = 0; i < xorResult.length; i++) {
+                binaryString += String.fromCharCode(xorResult[i]);
+            }
+            const encryptedBase64 = btoa(binaryString);
+            blob = new Blob([encryptedBase64], {type: 'text/plain'});
         }
 
         if (blob) {
@@ -158,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             URL.revokeObjectURL(url);
             
             downloadLink.href = '#';
-            downloadLink.textContent = `Downloaded ${originalFilename}`;
+            downloadLink.textContent = `Downloaded ${a.download}`;
             downloadLink.style.display = 'block';
             outputDiv.textContent = `Successfully encoded and download started.`;
         } else {
