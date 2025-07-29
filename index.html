@@ -8,24 +8,31 @@
 </head>
 <body>
     <div class="container">
-        <h1>File Decoder/Encoder</h1>
+        <h1>Base64 Decoder/Encoder</h1>
         <div class="card">
-            <h2>1. Select File</h2>
-            <input type="file" id="fileInput">
+            <h2>1. Select Data Type</h2>
+            <select id="dataType">
+                <option value="default">Default</option>
+                <option value="statistic">Statistic</option>
+                <option value="game">Game Data</option>
+                <option value="item_data">Item Data</option>
+            </select>
+            <h2>2. Paste Base64 Input</h2>
+            <textarea id="base64Input" rows="10"></textarea>
         </div>
         <div class="card">
             <button id="decodeButton">Decode</button>
         </div>
         <div class="card">
-            <h2>2. Edit JSON</h2>
+            <h2>3. Edit JSON</h2>
             <textarea id="jsonEditor" rows="15"></textarea>
         </div>
         <div class="card">
             <button id="encodeButton">Encode</button>
         </div>
         <div class="card">
-            <h2>3. Download Encoded File</h2>
-            <a id="downloadLink" style="display:none;"></a>
+            <h2>4. Base64 Output</h2>
+            <textarea id="base64Output" rows="10" readonly></textarea>
             <div id="output"></div>
         </div>
     </div>
